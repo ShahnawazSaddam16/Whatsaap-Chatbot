@@ -39,10 +39,12 @@ app.use(errorHandler);
 
 const PORT = config.port;
 
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-  logger.info(`Environment: ${config.nodeEnv}`);
-  logger.info(`Webhook URL: http://localhost:${PORT}/webhook`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`Environment: ${config.nodeEnv}`);
+    logger.info(`Webhook URL: http://localhost:${PORT}/webhook`);
+  });
+}
 
 module.exports = app;

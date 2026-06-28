@@ -6,7 +6,7 @@ const verifyWebhook = (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
-
+  
   if (mode === "subscribe" && token === config.whatsapp.verifyToken) {
     logger.info("Webhook verified successfully");
     return res.status(200).send(challenge);
@@ -39,7 +39,7 @@ const handleWebhook = async (req, res) => {
 
     await processIncomingMessage(message, contact);
   } catch (error) {
-    logger.error("Error processing webhook:", error.message);
+    logger.error("Error processing webhook:", error.response?.data || error.message);
   }
 };
 

@@ -2,10 +2,10 @@ const config = require("../config/env");
 
 const logger = {
   info: (message, data = "") => {
-    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, data);
+    if (config.nodeEnv !== "test") console.log(`[INFO] ${new Date().toISOString()} - ${message}`, data);
   },
   error: (message, error = "") => {
-    console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, error);
+    if (config.nodeEnv !== "test") console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, error);
   },
   debug: (message, data = "") => {
     if (config.nodeEnv === "development") {
@@ -13,7 +13,7 @@ const logger = {
     }
   },
   warn: (message, data = "") => {
-    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, data);
+    if (config.nodeEnv !== "test") console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, data);
   },
 };
 
