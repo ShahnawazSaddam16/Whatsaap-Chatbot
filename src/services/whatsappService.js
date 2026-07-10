@@ -64,9 +64,9 @@ const sendServicesMenu = async (to) => {
     type: "interactive",
     interactive: {
       type: "list",
-      header: { type: "text", text: "Butt Networks" },
+      header: { type: "text", text: "Our Services" },
       body: { text: "Here's what we offer. Tap to view a service:" },
-      footer: { text: "hello@buttnetworks.dev" },
+      footer: { text: "Tap an option below" },
       action: {
         button: "View Services",
         sections: [
