@@ -1,92 +1,105 @@
-const axios = require("axios");
+const { getChatCompletion } = require("./groqService");
+const {
+  sendTextMessage,
+  sendTypingIndicator,
+  sendServicesMenu,
+  markMessageAsRead,
+} = require("./whatsappService");
+const { clearHistory } = require("../utils/conversationStore");
 
-const whatsappApiUrl = process.env.WHATSAPP_API_URL;
-const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-
-if (!whatsappApiUrl || !phoneNumberId || !accessToken) {
-  throw new Error("Missing WhatsApp env vars: WHATSAPP_API_URL, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN");
-}
-
-const whatsappApi = axios.create({
-  baseURL: `${whatsappApiUrl}/${phoneNumberId}`,
-  headers: {
-    Authorization: `Bearer ${accessToken}`,
-    "Content-Type": "application/json",
-  },
-});
-
-const sendTextMessage = async (to, message) => {
-  const payload = {
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to,
-    type: "text",
-    text: {
-      preview_url: false,
-      body: message,
-    },
-  };
-
-  const response = await whatsappApi.post("/messages", payload);
-  console.info(`Message sent to ${to}`, response.data);
-  return response.data;
+const COMMANDS = {
+  RESET: ["/reset", "/clear", "/start"],
+  HELP: ["/help"],
 };
 
-const markMessageAsRead = async (messageId) => {
-  const payload = {
-    messaging_product: "whatsapp",
-    status: "read",
-    message_id: messageId,
-  };
+const GREETINGS = ["hi", "hello", "hey", "salam", "assalamualaikum"];
+const SERVICE_KEYWORDS = ["service", "services", "what do you offer", "what can you do"];
+const WELCOME_NAME = "Shahnawaz Sadam Butt";
 
-  await whatsappApi.post("/messages", payload);
-  console.debug(`Message ${messageId} marked as read`);
+const isGreeting = (text) => {
+  const cleaned = text.toLowerCase().trim().replace(/[!.?]/g, "");
+  return GREETINGS.includes(cleaned);
 };
 
-const sendTypingIndicator = async (messageId) => {
-  const payload = {
-    messaging_product: "whatsapp",
-    status: "read",
-    message_id: messageId,
-    typing_indicator: { type: "text" },
-  };
-
-  await whatsappApi.post("/messages", payload);
-  console.debug(`Typing indicator sent for ${messageId}`);
+const isServiceQuery = (text) => {
+  const cleaned = text.toLowerCase().trim();
+  return SERVICE_KEYWORDS.some((keyword) => cleaned.includes(keyword));
 };
 
-const sendServicesMenu = async (to) => {
-  const payload = {
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to,
-    type: "interactive",
-    interactive: {
-      type: "list",
-      header: { type: "text", text: "Butt Networks" },
-      body: { text: "Here's what we offer. Tap to view a service:" },
-      footer: { text: "hello@buttnetworks.dev" },
-      action: {
-        button: "View Services",
-        sections: [
-          {
-            title: "Services",
-            rows: [
-              { id: "svc_web", title: "Web Development", description: "Custom websites & web apps" },
-              { id: "svc_mobile", title: "Mobile Apps", description: "iOS & Android apps" },
-              { id: "svc_ai", title: "AI Integrations", description: "LLM-powered features" },
-              { id: "svc_admin", title: "Admin Dashboards", description: "Analytics & management panels" },
-            ],
-          },
-        ],
-      },
-    },
-  };
+const handleCommand = async (from, command) => {
+  const lowerCmd = command.toLowerCase().trim();
 
-  const response = await whatsappApi.post("/messages", payload);
-  console.info(`Services menu sent to ${to}`, response.data);
-  return response.data;
+  if (COMMANDS.RESET.includes(lowerCmd)) {
+    clearHistory(from);
+    await sendTextMessage(from, "Conversation reset! How can I help you today?");
+    return true;
+  }
+
+  if (COMMANDS.HELP.includes(lowerCmd)) {
+    const helpText =
+      "Available commands:\n\n" +
+      "/reset or /clear - Reset conversation history\n" +
+      "/start - Start a new conversation\n" +
+      "/help - Show this help message\n\n" +
+      "Just type any message to chat with the AI assistant!";
+    await sendTextMessage(from, helpText);
+    return true;
+  }
+
+  return false;
 };
 
-module.exports = { sendTextMessage, markMessageAsRead, sendTypingIndicator, sendServicesMenu };
+const SERVICE_DETAILS = {
+  svc_web: "Web Development: custom websites and web apps built with Next.js and Node.js.",
+  svc_mobile: "Mobile Apps: cross-platform apps built with React Native and Expo.",
+  svc_ai: "AI Integrations: LLM-powered features using Groq for chat, search, and automation.",
+  svc_admin: "Admin Dashboards: analytics and management panels with authentication and reporting.",
+};
+
+const handleInteractiveReply = async (from, message) => {
+  const replyId = message.interactive?.list_reply?.id || message.interactive?.button_reply?.id;
+  if (!replyId) return;
+
+  const reply = SERVICE_DETAILS[replyId] || "Thanks for your interest! Let us know if you'd like more details.";
+  await sendTextMessage(from, reply);
+};
+
+const processIncomingMessage = async (message, contact) => {
+  const from = message.from;
+  const messageId = message.id;
+  const messageType = message.type;
+
+  console.info(`Processing message from ${from}`, { type: messageType });
+
+  await sendTypingIndicator(messageId);
+
+  if (messageType === "interactive") {
+    await handleInteractiveReply(from, message);
+    return;
+  }
+
+  if (messageType !== "text") {
+    await sendTextMessage(from, "Sorry, I can only process text messages at the moment.");
+    return;
+  }
+
+  const userText = message.text.body;
+
+  const isCommand = await handleCommand(from, userText);
+  if (isCommand) return;
+
+  if (isGreeting(userText)) {
+    await sendTextMessage(from, `Welcome ${WELCOME_NAME}! How can I help you today?`);
+    return;
+  }
+
+  if (isServiceQuery(userText)) {
+    await sendServicesMenu(from);
+    return;
+  }
+
+  const aiResponse = await getChatCompletion(from, userText);
+  await sendTextMessage(from, aiResponse);
+};
+
+module.exports = { processIncomingMessage };
