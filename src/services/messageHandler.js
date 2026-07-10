@@ -1,7 +1,6 @@
 const { getChatCompletion } = require("./groqService");
 const { sendTextMessage, markMessageAsRead } = require("./whatsappService");
 const { clearHistory } = require("../utils/conversationStore");
-const logger = require("../utils/logger");
 
 const COMMANDS = {
   RESET: ["/reset", "/clear", "/start"],
@@ -39,7 +38,7 @@ const processIncomingMessage = async (message, contact) => {
   const messageId = message.id;
   const messageType = message.type;
 
-  logger.info(`Processing message from ${from}`, { type: messageType });
+  console.info(`Processing message from ${from}`, { type: messageType });
 
   await markMessageAsRead(messageId);
 

@@ -1,11 +1,17 @@
 const axios = require("axios");
-const config = require("../config/env");
-const logger = require("../utils/logger");
+
+const whatsappApiUrl = process.env.WHATSAPP_API_URL;
+const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+if (!whatsappApiUrl || !phoneNumberId || !accessToken) {
+  throw new Error("Missing WhatsApp env vars: WHATSAPP_API_URL, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN");
+}
 
 const whatsappApi = axios.create({
-  baseURL: `${config.whatsapp.apiUrl}/${config.whatsapp.phoneNumberId}`,
+  baseURL: `${whatsappApiUrl}/${phoneNumberId}`,
   headers: {
-    Authorization: `Bearer ${config.whatsapp.accessToken}`,
+    Authorization: `Bearer ${accessToken}`,
     "Content-Type": "application/json",
   },
 });
@@ -23,7 +29,7 @@ const sendTextMessage = async (to, message) => {
   };
 
   const response = await whatsappApi.post("/messages", payload);
-  logger.info(`Message sent to ${to}`, response.data);
+  console.info(`Message sent to ${to}`, response.data);
   return response.data;
 };
 
@@ -35,7 +41,7 @@ const markMessageAsRead = async (messageId) => {
   };
 
   await whatsappApi.post("/messages", payload);
-  logger.debug(`Message ${messageId} marked as read`);
+  console.debug(`Message ${messageId} marked as read`);
 };
 
 const sendTypingIndicator = async (to) => {
