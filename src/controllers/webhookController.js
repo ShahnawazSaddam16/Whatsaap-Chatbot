@@ -1,18 +1,14 @@
-const config = require("../config/env");
 const { processIncomingMessage } = require("../services/messageHandler");
-const logger = require("../utils/logger");
 
 const verifyWebhook = (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
   
-  if (mode === "subscribe" && token === config.whatsapp.verifyToken) {
-    logger.info("Webhook verified successfully");
+  if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
     return res.status(200).send(challenge);
   }
 
-  logger.warn("Webhook verification failed");
   return res.status(403).json({ error: "Forbidden" });
 };
 
@@ -39,7 +35,7 @@ const handleWebhook = async (req, res) => {
 
     await processIncomingMessage(message, contact);
   } catch (error) {
-    logger.error("Error processing webhook:", error.response?.data || error.message);
+    console.error("Error processing webhook:", error.response?.data || error.message);
   }
 };
 
