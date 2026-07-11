@@ -56,42 +56,8 @@ const sendTypingIndicator = async (messageId) => {
   console.debug(`Typing indicator sent for ${messageId}`);
 };
 
-const sendServicesMenu = async (to) => {
-  const payload = {
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to,
-    type: "interactive",
-    interactive: {
-      type: "list",
-      header: { type: "text", text: "Our Services" },
-      body: { text: "Here's what we offer. Tap to view a service:" },
-      footer: { text: "Tap an option below" },
-      action: {
-        button: "View Services",
-        sections: [
-          {
-            title: "Services",
-            rows: [
-              { id: "svc_web", title: "Web Development", description: "Custom websites & web apps" },
-              { id: "svc_mobile", title: "Mobile Apps", description: "iOS & Android apps" },
-              { id: "svc_ai", title: "AI Integrations", description: "LLM-powered features" },
-              { id: "svc_admin", title: "Admin Dashboards", description: "Analytics & management panels" },
-            ],
-          },
-        ],
-      },
-    },
-  };
-
-  const response = await whatsappApi.post("/messages", payload);
-  console.info(`Services menu sent to ${to}`, response.data);
-  return response.data;
-};
-
 module.exports = {
   sendTextMessage,
   markMessageAsRead,
   sendTypingIndicator,
-  sendServicesMenu,
 };

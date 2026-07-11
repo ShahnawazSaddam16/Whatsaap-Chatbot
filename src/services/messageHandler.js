@@ -2,7 +2,6 @@ const { getChatCompletion } = require("./groqService");
 const {
   sendTextMessage,
   sendTypingIndicator,
-  sendServicesMenu,
 } = require("./whatsappService");
 const { clearHistory } = require("../utils/conversationStore");
 
