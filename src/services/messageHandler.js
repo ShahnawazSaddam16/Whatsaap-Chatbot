@@ -11,20 +11,6 @@ const COMMANDS = {
   HELP: ["/help"],
 };
 
-const GREETINGS = ["hi", "hello", "hey", "salam", "assalamualaikum"];
-const SERVICE_KEYWORDS = ["service", "services", "what do you offer", "what can you do"];
-const WELCOME_NAME = "Shahnawaz Sadam Butt";
-
-const isGreeting = (text) => {
-  const cleaned = text.toLowerCase().trim().replace(/[!.?]/g, "");
-  return GREETINGS.includes(cleaned);
-};
-
-const isServiceQuery = (text) => {
-  const cleaned = text.toLowerCase().trim();
-  return SERVICE_KEYWORDS.some((keyword) => cleaned.includes(keyword));
-};
-
 const handleCommand = async (from, command) => {
   const lowerCmd = command.toLowerCase().trim();
 
@@ -86,16 +72,6 @@ const processIncomingMessage = async (message, contact) => {
 
   const isCommand = await handleCommand(from, userText);
   if (isCommand) return;
-
-  if (isGreeting(userText)) {
-    await sendTextMessage(from, `Welcome ${WELCOME_NAME}! How can I help you today?`);
-    return;
-  }
-
-  if (isServiceQuery(userText)) {
-    await sendServicesMenu(from);
-    return;
-  }
 
   const aiResponse = await getChatCompletion(from, userText);
   await sendTextMessage(from, aiResponse);
