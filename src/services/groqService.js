@@ -17,7 +17,7 @@ Company details:
 Keep responses concise, professional, and friendly.`;
 
 const config = {
-  systemPrompt: process.env.SYSTEM_PROMPT || BUTT_NETWORKS_SYSTEM_PROMPT,
+  systemPrompt: BUTT_NETWORKS_SYSTEM_PROMPT,
   groq: {
     apiKey: process.env.GROQ_API_KEY,
     model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
